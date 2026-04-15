@@ -6,17 +6,22 @@ import (
 
 	"github.com/Roger13san/games-review/backend/internal/model"
 	"github.com/Roger13san/games-review/backend/internal/repository"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func GetReviewsService() ([]model.Review, error) {
 	return repository.GetReviews()
 }
 
-func GetReviewByIDService(id int) (model.Review, error) {
-	if id <= 0 {
-		return model.Review{}, errors.New("id inválido")
-	}
+func GetReviewsByGameIDService(gameID uint32) ([]model.Review, error) {
+	return repository.GetReviewsByGameID(gameID)
+}
 
+func GetReviewsByUserIDService(userID primitive.ObjectID) ([]model.Review, error) {
+	return repository.GetReviewsByUserID(userID)
+}
+
+func GetReviewByIDService(id primitive.ObjectID) (model.Review, error) {
 	return repository.GetReviewByID(id)
 }
 
@@ -28,11 +33,7 @@ func CreateReviewService(review model.Review) (model.Review, error) {
 	return repository.CreateReview(review)
 }
 
-func UpdateReviewService(id int, review model.Review) (model.Review, error) {
-	if id <= 0 {
-		return model.Review{}, errors.New("id inválido")
-	}
-
+func UpdateReviewService(id primitive.ObjectID, review model.Review) (model.Review, error) {
 	if err := validateReview(review); err != nil {
 		return model.Review{}, err
 	}
@@ -40,11 +41,7 @@ func UpdateReviewService(id int, review model.Review) (model.Review, error) {
 	return repository.UpdateReview(id, review)
 }
 
-func DeleteReviewService(id int) error {
-	if id <= 0 {
-		return errors.New("id inválido")
-	}
-
+func DeleteReviewService(id primitive.ObjectID) error {
 	return repository.DeleteReview(id)
 }
 
@@ -57,11 +54,12 @@ func validateReview(review model.Review) error {
 		return errors.New("conteúdo é obrigatório")
 	}
 
-	if review.GameID <= 0 {
+	// GameID é o appid da Steam — qualquer valor maior que 0 é válido.
+	if review.GameID == 0 {
 		return errors.New("game_id inválido")
 	}
 
-	if review.UserID <= 0 {
+	if review.UserID.IsZero() {
 		return errors.New("user_id inválido")
 	}
 
